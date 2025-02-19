@@ -1,13 +1,35 @@
-**Bitcache** is a solution that allows you to backup your Bitlocker recovery keys from Entra ID (aka Azure AD) to a **local database**. When the device object is removed from Entra ID, they key is lost. In case you need to unlock the Bitlocker-encrypted volume after some time and the computer object in Entra ID does not exist anymore, the key is not available either and it might be impossible to unlock it. The device might not store the key in Active Directory or use Confiuration Manager (MBAM) agent so making a local backup of keys might be important.
+![image](https://github.com/user-attachments/assets/b583893a-bddd-4463-bc0e-6647edb61eb0) **Bitcache** is a solution that allows you to backup your Bitlocker recovery keys from Entra ID (aka Azure AD) to a **local database**. When the device object is removed from Entra ID, they key is lost. In case you need to unlock the Bitlocker-encrypted volume after some time and the computer object in Entra ID does not exist anymore, the key is not available either and it might be impossible to unlock it. The device might not store the key in Active Directory or use Confiuration Manager (MBAM) agent so making a local backup of keys might be important.
 
 **Requirements**:
 
 * Windows 10/11 OS
 * .NET 8.0 Desktop Runtime (https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer)
 * Microsoft SQL Server Express (https://www.microsoft.com/en-us/download/details.aspx?id=104781&lc=1033&msockid=3fa1e886c58b622615fafc6bc49963e6)
+* Entra ID App Registration - for Bitcache to use Graph API to extract data:
+  Go to https://entra.microsoft.com
+  Under Identity click on Applications and select App Registrations. Create a new registration.
+  Give it any meaningful name, e.g. Bitcache. Leave "Accounts in this organizational directory only (Contoso only - Single tenant)" under "Supported account types". Click on Register.
+  
+  ![image](https://github.com/user-attachments/assets/0db075c0-2856-4e48-ac66-b9882a00583d)
+  
+  In the confguration go to Authentication and under "Platform configurations" click on "Add a platform'. Select "Mobile and desktop applications" and under "Custom redirect URIs" add "http://localhost".
 
-**Instructions**
+  ![image](https://github.com/user-attachments/assets/f5bfb319-0588-4e38-b4a8-3fa491fd8ae6)
+
+  In the confguration go to API Permissions and 
+
+
+
+
+  
+
+**Instructions**:
 
 The application requires Microsoft SQL Server Express running on the same machine. The database will be create at the first launch of the application.
 
 After the application is run, you will need to sync the keys from Entra ID to Bitcache.
+
+
+**Roadmap**:
+
+* zero-knowledge data encrypton in the DB
