@@ -14,7 +14,7 @@
   
   Under Identity click on "Applications" and select "App Registrations". Create a new registration.
   
-  Give it any meaningful name, e.g. Bitcache. Leave "Accounts in this organizational directory only (Contoso only - Single tenant)" under "Supported account types". Click on Register.
+  Give it any meaningful name, e.g. Bitcache. Leave "Accounts in this organizational directory only (Contoso only - Single tenant)" under "Supported account types". Click on "Register".
   
   ![image](https://github.com/user-attachments/assets/0db075c0-2856-4e48-ac66-b9882a00583d)
   
@@ -35,10 +35,13 @@
 
 **Instructions**:
 
-The application requires Microsoft SQL Server Express running on the same machine. The database will be create at the first launch of the application.
+The application requires Microsoft SQL Server Express running on the same machine. The database will be create at the first launch of the application. If connection to the SQL Server is not possible, you will get an error message and the application will close.
 
-After the application is run, you will need to sync the keys from Entra ID to Bitcache.
+After the application is run, you will need to sync the keys from Entra ID to Bitcache. to do it, you will need to configure tenant and login. At the first run the configuration status will show "Not configured":
 
+<img width="645" alt="image" src="https://github.com/user-attachments/assets/e25a4d3d-3505-4fba-a2ec-a98dfdd5d62e" />
+
+Click on "Configure".
 
 **Roadmap**:
 
