@@ -3,25 +3,35 @@
 **Requirements**:
 
 * Windows 10/11 OS
+  
 * .NET 8.0 Desktop Runtime (https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-desktop-8.0.13-windows-x64-installer)
+  
 * Microsoft SQL Server Express (https://www.microsoft.com/en-us/download/details.aspx?id=104781&lc=1033&msockid=3fa1e886c58b622615fafc6bc49963e6)
+  
 * Entra ID App Registration - for Bitcache to use Graph API to extract data:
+  
   Go to https://entra.microsoft.com
-  Under Identity click on Applications and select App Registrations. Create a new registration.
+  
+  Under Identity click on "Applications" and select "App Registrations". Create a new registration.
+  
   Give it any meaningful name, e.g. Bitcache. Leave "Accounts in this organizational directory only (Contoso only - Single tenant)" under "Supported account types". Click on Register.
   
   ![image](https://github.com/user-attachments/assets/0db075c0-2856-4e48-ac66-b9882a00583d)
   
-  In the confguration go to Authentication and under "Platform configurations" click on "Add a platform'. Select "Mobile and desktop applications" and under "Custom redirect URIs" add "http://localhost".
+  In the confguration go to "Authentication" and under "Platform configurations" click on "Add a platform'. Select "Mobile and desktop applications" and under "Custom redirect URIs" add "http://localhost".
 
   ![image](https://github.com/user-attachments/assets/f5bfb319-0588-4e38-b4a8-3fa491fd8ae6)
 
-  In the confguration go to API Permissions and 
+  In the confguration go to "API Permission's and add a permission. Select "Delegated" and add the following permissions: BitlockerKey.Read.All, BitlockerKey.ReadBasic.All, Device.Read.All.
 
+  Make sure to click "Grant admin consent for <your org name>". If you don't hold a Global Addmin, Privileged Role Administrator or a smililar one, you might need to ask your tenant administator to consent. See: https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/grant-admin-consent
 
+  ![image](https://github.com/user-attachments/assets/cac3c686-2268-4eee-b685-e18693ede561)
 
+  Go back to "Overview" and note down "Directory (tenant) ID" and "Application (client) ID":
 
-  
+  <img width="881" alt="image" src="https://github.com/user-attachments/assets/b51f8496-8790-4420-bbc0-8037a6cbbbcd" />
+
 
 **Instructions**:
 
