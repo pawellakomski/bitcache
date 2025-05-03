@@ -62,24 +62,38 @@ namespace bitcache
                         else
                         {
                             MessageBox.Show("The DB for Bitcache does not exist. Creating it now...", "Bitcache");
-                            string createDB = "CREATE DATABASE bitcache";
-                            string createTableBitcacheKeys = "DROP TABLE IF EXISTS [dbo].[bitcachekeys];CREATE TABLE [dbo].[bitcachekeys]([bitcacheId] [int] IDENTITY(1,1) NOT NULL,[bitcacheHostname] [varchar](50) NOT NULL,[bitcacheKeyId] [varchar](100) NOT NULL,[bitcacheKeyContent] [varchar](100) NOT NULL,[bitcacheKeyDate] [date] NOT NULL,[bitcacheOS] [varchar](100) NOT NULL)";
-                            string createTableBitcacheMeta = "DROP TABLE IF EXISTS [dbo].[bitcachemeta];CREATE TABLE bitcachemeta([bitcacheTenantId] [varchar](100) NULL,[bitcacheClientId] [varchar](100) NULL,[bitcacheSyncTime] [varchar](20) NULL)";
+                            string createDB = "CREATE DATABASE bitcache;";
 
                             using (SqlCommand cmdCreateDB = new SqlCommand(createDB, conn))
                             {
                                 cmdCreateDB.ExecuteNonQuery();
                             }
-                            using (SqlCommand cmdCreateTableBitcacheKeys = new SqlCommand(createTableBitcacheKeys, conn))
-                            {
-                                cmdCreateTableBitcacheKeys.ExecuteNonQuery();
-                            }
-                            using (SqlCommand cmdCreateTableBitcachMeta = new SqlCommand(createTableBitcacheMeta, conn))
-                            {
-                                cmdCreateTableBitcachMeta.ExecuteNonQuery();
-                            }
+
                             conn.Close();
+
                         }
+                    }
+
+                    string connectionStringTable = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
+                    string createTableSqlKeys = "CREATE TABLE [dbo].[bitcachekeys]([bitcacheId] [int] IDENTITY(1,1) NOT NULL,[bitcacheHostname] [varchar](50) NOT NULL,[bitcacheKeyId] [varchar](100) NOT NULL,[bitcacheKeyContent] [varchar](100) NOT NULL,[bitcacheKeyDate] [date] NOT NULL,[bitcacheOS] [varchar](100) NOT NULL);CREATE TABLE bitcachemeta([bitcacheTenantId] [varchar](100) NULL,[bitcacheClientId] [varchar](100) NULL,[bitcacheSyncTime] [varchar](20) NULL)";
+
+                    try
+                    {
+
+                        using (SqlConnection connTable = new SqlConnection(connectionStringTable))
+                        {
+                            connTable.Open();
+                            using (SqlCommand cmdTable = new SqlCommand(createTableSqlKeys, connTable))
+                            {
+                                cmdTable.ExecuteNonQuery();
+                            }
+                            connTable.Close();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("error!");
+                        //Console.WriteLine("Error: " + ex.Message);
                     }
                 }
                 catch (Exception ex)
@@ -90,6 +104,14 @@ namespace bitcache
                 }
                 conn.Close();
             }
+
+
+
+
+
+
+
+
 
             string sqlQueryLastSync = "SELECT bitcacheSyncTime FROM bitcachemeta";
             SqlConnection con = new SqlConnection(connectionString);

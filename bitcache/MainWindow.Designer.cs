@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             ExitButton = new Button();
             SignInButton = new Button();
             GraphResultsTextBox = new RichTextBox();
@@ -363,6 +364,7 @@
             Controls.Add(ExitButton);
             Controls.Add(groupSignIn);
             Controls.Add(groupSync);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
             MinimumSize = new Size(800, 500);
             Name = "MainWindow";
