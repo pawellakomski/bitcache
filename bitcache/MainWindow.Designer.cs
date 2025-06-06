@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainWindow));
             ExitButton = new Button();
             SignInButton = new Button();
@@ -38,9 +39,13 @@
             numberOfKeys = new Label();
             manSync = new Button();
             groupSync = new GroupBox();
+            clearDB = new Button();
             groupSignIn = new GroupBox();
+            tenantConfigClientLabel = new Label();
+            tenantConfigTenantLabel = new Label();
+            tenantConfigClientBox = new TextBox();
+            tenantConfigTenantBox = new TextBox();
             tenantConfigButton = new Button();
-            tenantConfig = new Label();
             signInUser = new Label();
             signinStatus = new Label();
             mainPane = new TabControl();
@@ -58,6 +63,7 @@
             Hostname = new DataGridViewTextBoxColumn();
             label1 = new Label();
             btnExportToCSV = new Button();
+            notifyIcon1 = new NotifyIcon(components);
             groupSync.SuspendLayout();
             groupSignIn.SuspendLayout();
             mainPane.SuspendLayout();
@@ -81,7 +87,7 @@
             // SignInButton
             // 
             SignInButton.Anchor = AnchorStyles.Top;
-            SignInButton.Location = new Point(18, 299);
+            SignInButton.Location = new Point(17, 468);
             SignInButton.Name = "SignInButton";
             SignInButton.Size = new Size(113, 34);
             SignInButton.TabIndex = 0;
@@ -143,35 +149,81 @@
             // 
             // groupSync
             // 
+            groupSync.Controls.Add(clearDB);
             groupSync.Controls.Add(manSync);
             groupSync.Controls.Add(numberOfKeys);
             groupSync.Controls.Add(lastSync);
             groupSync.Controls.Add(progressBar);
             groupSync.Controls.Add(syncStatus);
-            groupSync.Location = new Point(16, 433);
+            groupSync.Location = new Point(3, 645);
             groupSync.Name = "groupSync";
             groupSync.Size = new Size(458, 384);
             groupSync.TabIndex = 9;
             groupSync.TabStop = false;
             groupSync.Text = "Synchronization";
             // 
+            // clearDB
+            // 
+            clearDB.Location = new Point(332, 333);
+            clearDB.Name = "clearDB";
+            clearDB.Size = new Size(112, 34);
+            clearDB.TabIndex = 15;
+            clearDB.Text = "Clear DB";
+            clearDB.UseVisualStyleBackColor = true;
+            clearDB.Click += button1_Click;
+            // 
             // groupSignIn
             // 
+            groupSignIn.Controls.Add(tenantConfigClientLabel);
+            groupSignIn.Controls.Add(tenantConfigTenantLabel);
+            groupSignIn.Controls.Add(tenantConfigClientBox);
+            groupSignIn.Controls.Add(tenantConfigTenantBox);
             groupSignIn.Controls.Add(tenantConfigButton);
-            groupSignIn.Controls.Add(tenantConfig);
             groupSignIn.Controls.Add(signInUser);
             groupSignIn.Controls.Add(signinStatus);
             groupSignIn.Controls.Add(SignInButton);
             groupSignIn.Location = new Point(16, 27);
             groupSignIn.Name = "groupSignIn";
-            groupSignIn.Size = new Size(458, 351);
+            groupSignIn.Size = new Size(458, 540);
             groupSignIn.TabIndex = 10;
             groupSignIn.TabStop = false;
             groupSignIn.Text = "Entra Sign-In Status";
             // 
+            // tenantConfigClientLabel
+            // 
+            tenantConfigClientLabel.AutoSize = true;
+            tenantConfigClientLabel.Location = new Point(18, 163);
+            tenantConfigClientLabel.Name = "tenantConfigClientLabel";
+            tenantConfigClientLabel.Size = new Size(116, 25);
+            tenantConfigClientLabel.TabIndex = 11;
+            tenantConfigClientLabel.Text = "App client id:";
+            // 
+            // tenantConfigTenantLabel
+            // 
+            tenantConfigTenantLabel.AutoSize = true;
+            tenantConfigTenantLabel.Location = new Point(17, 56);
+            tenantConfigTenantLabel.Name = "tenantConfigTenantLabel";
+            tenantConfigTenantLabel.Size = new Size(87, 25);
+            tenantConfigTenantLabel.TabIndex = 10;
+            tenantConfigTenantLabel.Text = "Tenant id:";
+            // 
+            // tenantConfigClientBox
+            // 
+            tenantConfigClientBox.Location = new Point(17, 206);
+            tenantConfigClientBox.Name = "tenantConfigClientBox";
+            tenantConfigClientBox.Size = new Size(414, 31);
+            tenantConfigClientBox.TabIndex = 9;
+            // 
+            // tenantConfigTenantBox
+            // 
+            tenantConfigTenantBox.Location = new Point(17, 96);
+            tenantConfigTenantBox.Name = "tenantConfigTenantBox";
+            tenantConfigTenantBox.Size = new Size(414, 31);
+            tenantConfigTenantBox.TabIndex = 8;
+            // 
             // tenantConfigButton
             // 
-            tenantConfigButton.Location = new Point(19, 85);
+            tenantConfigButton.Location = new Point(22, 274);
             tenantConfigButton.Name = "tenantConfigButton";
             tenantConfigButton.Size = new Size(112, 34);
             tenantConfigButton.TabIndex = 7;
@@ -179,19 +231,10 @@
             tenantConfigButton.UseVisualStyleBackColor = true;
             tenantConfigButton.Click += tenantConfigButton_Click;
             // 
-            // tenantConfig
-            // 
-            tenantConfig.AutoSize = true;
-            tenantConfig.Location = new Point(18, 46);
-            tenantConfig.Name = "tenantConfig";
-            tenantConfig.Size = new Size(174, 25);
-            tenantConfig.TabIndex = 6;
-            tenantConfig.Text = "Tenant config status:";
-            // 
             // signInUser
             // 
             signInUser.AutoSize = true;
-            signInUser.Location = new Point(18, 254);
+            signInUser.Location = new Point(18, 428);
             signInUser.Name = "signInUser";
             signInUser.Size = new Size(59, 25);
             signInUser.TabIndex = 5;
@@ -201,7 +244,7 @@
             // signinStatus
             // 
             signinStatus.AutoSize = true;
-            signinStatus.Location = new Point(17, 218);
+            signinStatus.Location = new Point(17, 385);
             signinStatus.Name = "signinStatus";
             signinStatus.Size = new Size(153, 25);
             signinStatus.TabIndex = 4;
@@ -259,6 +302,9 @@
             // 
             // searchResultsPane
             // 
+            searchResultsPane.AllowUserToAddRows = false;
+            searchResultsPane.AllowUserToDeleteRows = false;
+            searchResultsPane.AllowUserToOrderColumns = true;
             searchResultsPane.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             searchResultsPane.Location = new Point(27, 106);
             searchResultsPane.Name = "searchResultsPane";
@@ -344,13 +390,18 @@
             // 
             // btnExportToCSV
             // 
-            btnExportToCSV.Location = new Point(335, 1096);
+            btnExportToCSV.Location = new Point(308, 1092);
             btnExportToCSV.Name = "btnExportToCSV";
             btnExportToCSV.Size = new Size(139, 34);
             btnExportToCSV.TabIndex = 14;
             btnExportToCSV.Text = "Export to CSV";
             btnExportToCSV.UseVisualStyleBackColor = true;
             btnExportToCSV.Click += btnExportToCSV_Click;
+            // 
+            // notifyIcon1
+            // 
+            notifyIcon1.Text = "notifyIcon1";
+            notifyIcon1.Visible = true;
             // 
             // MainWindow
             // 
@@ -406,12 +457,17 @@
         private DataGridViewTextBoxColumn Hostname;
         private Label signInUser;
         private Button tenantConfigButton;
-        private Label tenantConfig;
         private Label label1;
         private TextBox searchFileld;
         private Button searchButton;
         private Label label2;
         private DataGridView searchResultsPane;
         private Button btnExportToCSV;
+        private Label tenantConfigClientLabel;
+        private Label tenantConfigTenantLabel;
+        private TextBox tenantConfigClientBox;
+        private TextBox tenantConfigTenantBox;
+        private Button clearDB;
+        private NotifyIcon notifyIcon1;
     }
 }

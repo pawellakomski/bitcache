@@ -16,6 +16,8 @@ using System.Drawing;
 using System.Data;
 using System.Text;
 using System.Reflection.PortableExecutable;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace bitcache
 {
@@ -26,8 +28,10 @@ namespace bitcache
         private bool signedIn = false;
         private bool tenantConfigured = false;
         private bool dbconfigured = false;
-        private readonly IPublicClientApplication msalPublicClientApp;
+        private IPublicClientApplication msalPublicClientApp;
         private AuthenticationResult? msalAuthenticationResult = null;
+        private string TenantId;
+        private string ClientId;
 
 
         public MainWindow()
@@ -35,10 +39,8 @@ namespace bitcache
 
             InitializeComponent();
 
-            mainPane.TabPages[0].Text = "Saved keys";
-            mainPane.TabPages[1].Text = "Search";
-
-            //Checking last sync status and number of keys in the db
+            System.Windows.Forms.ToolTip tooltipSearch = new System.Windows.Forms.ToolTip();
+            tooltipSearch.SetToolTip(searchButton, "You can use part of computer names in your search.");
             string connectionString = "Data Source=.\\SQLEXPRESS;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
 
             //checking if the DB exists, if not create it
@@ -71,47 +73,58 @@ namespace bitcache
 
                             conn.Close();
 
-                        }
-                    }
+                            string connectionStringTable = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
+                            string createTableSqlKeys = "CREATE TABLE [dbo].[bitcachekeys]([bitcacheId] [int] IDENTITY(1,1) NOT NULL,[bitcacheHostname] [varchar](50) NOT NULL,[bitcacheKeyId] [varchar](100) NOT NULL,[bitcacheKeyContent] [varchar](100) NOT NULL,[bitcacheKeyDate] [varchar](50) NOT NULL,[bitcacheOS] [varchar](100) NOT NULL);CREATE TABLE bitcachemeta([bitcacheTenantId] [varchar](100) NULL,[bitcacheClientId] [varchar](100) NULL,[bitcacheSyncTime] [varchar](20) NULL)";
 
-                    string connectionStringTable = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
-                    string createTableSqlKeys = "CREATE TABLE [dbo].[bitcachekeys]([bitcacheId] [int] IDENTITY(1,1) NOT NULL,[bitcacheHostname] [varchar](50) NOT NULL,[bitcacheKeyId] [varchar](100) NOT NULL,[bitcacheKeyContent] [varchar](100) NOT NULL,[bitcacheKeyDate] [date] NOT NULL,[bitcacheOS] [varchar](100) NOT NULL);CREATE TABLE bitcachemeta([bitcacheTenantId] [varchar](100) NULL,[bitcacheClientId] [varchar](100) NULL,[bitcacheSyncTime] [varchar](20) NULL)";
 
-                    try
-                    {
-
-                        using (SqlConnection connTable = new SqlConnection(connectionStringTable))
-                        {
-                            connTable.Open();
-                            using (SqlCommand cmdTable = new SqlCommand(createTableSqlKeys, connTable))
+                            using (SqlConnection connTable = new SqlConnection(connectionStringTable))
                             {
-                                cmdTable.ExecuteNonQuery();
+                                connTable.Open();
+                                using (SqlCommand cmdTable = new SqlCommand(createTableSqlKeys, connTable))
+                                {
+                                    cmdTable.ExecuteNonQuery();
+                                }
+                                connTable.Close();
                             }
-                            connTable.Close();
+
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        MessageBox.Show("error!");
-                        //Console.WriteLine("Error: " + ex.Message);
-                    }
+
                 }
                 catch (Exception ex)
-               {
+                {
                     conn.Close();
+                    //MessageBox.Show("No connection to SQL server. Is SQL Express installed and running?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     MessageBox.Show("No connection to SQL server. Is SQL Express installed and running?", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                     Environment.Exit(1); // Exit with an error code
                 }
                 conn.Close();
             }
 
+            string connectionStringTenantConfig = "Data Source=.\\SQLEXPRESS;Initial Catalog=bitcache;Integrated Security=True; TrustServerCertificate=True";
+            string sqlQueryTenantConfig = "SELECT bitcacheTenantId FROM bitcachemeta";
+            SqlConnection conTenantConfig = new SqlConnection(connectionStringTenantConfig);
+            conTenantConfig.Open();
+            SqlCommand scTenantConfig = new SqlCommand(sqlQueryTenantConfig, conTenantConfig);
+            object queryResultTenantConfig = scTenantConfig.ExecuteScalar();
+            string sqlQueryClientConfig = "SELECT bitcacheClientId FROM bitcachemeta";
+            SqlCommand scClientConfig = new SqlCommand(sqlQueryClientConfig, conTenantConfig);
+            object queryResultClientConfig = scClientConfig.ExecuteScalar();
+            conTenantConfig.Close();
+
+            if (queryResultTenantConfig != null)
+            {
+                tenantConfigured = true;
+            }
 
 
+            mainPane.TabPages[0].Text = "Saved keys";
+            mainPane.TabPages[1].Text = "Search";
 
+            //Checking last sync status and number of keys in the db
 
-
-
-
+            connectionString = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
 
             string sqlQueryLastSync = "SELECT bitcacheSyncTime FROM bitcachemeta";
             SqlConnection con = new SqlConnection(connectionString);
@@ -134,7 +147,7 @@ namespace bitcache
                 lastSync.Text = "Last sync: " + queryResultLastSync.ToString();
             }
 
-            string sqlQueryAllKeys = "SELECT *  FROM bitcachekeys ORDER BY bitcacheHostname";
+            string sqlQueryAllKeys = "SELECT * FROM bitcachekeys ORDER BY bitcacheHostname";
             System.Data.DataTable dataTable = new System.Data.DataTable();
 
             try
@@ -161,39 +174,30 @@ namespace bitcache
                 MessageBox.Show("Error: " + ex.Message);
             }
 
-            //Checking if registered app is configured
-            string sqlQueryTenant = "SELECT bitcacheTenantId FROM bitcachemeta";
-            SqlConnection conTenant = new SqlConnection(connectionString);
-            conTenant.Open();
-            SqlCommand scTenant = new SqlCommand(sqlQueryTenant, conTenant);
-            object queryResultTenant = scTenant.ExecuteScalar();
-
-            string sqlQueryClient = "SELECT bitcacheClientId FROM bitcachemeta";
-            SqlCommand scClient = new SqlCommand(sqlQueryClient, conTenant);
-            object queryResultClient = scClient.ExecuteScalar();
-
-            
-
-            conTenant.Close();
-
-            if (queryResultTenant == null || queryResultClient == null)
-            {
-                tenantConfig.Text = "Tenant config status: Not configured";
-            }
-            else
-            {
-                tenantConfig.Text = "Tenant config status: Configured";
-                tenantConfigured = true;
-            }
-
-
             if (tenantConfigured)
             {
+
+                string connectionStringTenantConfigCheck = "Data Source=.\\SQLEXPRESS;Initial Catalog=bitcache;Integrated Security=True; TrustServerCertificate=True";
+
+                string sqlQueryTenantConfigCheck = "SELECT bitcacheTenantId FROM bitcachemeta";
+                SqlConnection conTenantConfigCheck = new SqlConnection(connectionStringTenantConfigCheck);
+                conTenantConfigCheck.Open();
+                SqlCommand scTenantConfigCheck = new SqlCommand(sqlQueryTenantConfigCheck, conTenantConfigCheck);
+                object queryResultTenantConfigCheck = scTenantConfigCheck.ExecuteScalar();
+
+                string sqlQueryClientConfigCheck = "SELECT bitcacheClientId FROM bitcachemeta";
+                SqlCommand scClientConfigCheck = new SqlCommand(sqlQueryClientConfigCheck, conTenantConfigCheck);
+                object queryResultClientConfigCheck = scClientConfigCheck.ExecuteScalar();
+                conTenantConfigCheck.Close();
+
+                tenantConfigTenantBox.Text = queryResultTenantConfigCheck.ToString();
+                tenantConfigClientBox.Text = queryResultClientConfigCheck.ToString();
+
                 msalPublicClientApp = PublicClientApplicationBuilder
                 .CreateWithApplicationOptions(new PublicClientApplicationOptions
                 {
-                    TenantId = queryResultTenant.ToString(),
-                    ClientId = queryResultClient.ToString()
+                    TenantId = queryResultTenantConfigCheck.ToString(),
+                    ClientId = queryResultClientConfigCheck.ToString()
                 })
                 .WithDefaultRedirectUri() // http://localhost
                 .Build();
@@ -204,6 +208,32 @@ namespace bitcache
 
         public async void SignInButton_Click(object sender, EventArgs e)
         {
+
+            string connectionStringTenantConfigCheck = "Data Source=.\\SQLEXPRESS;Initial Catalog=bitcache;Integrated Security=True; TrustServerCertificate=True";
+
+            string sqlQueryTenantConfigCheck = "SELECT bitcacheTenantId FROM bitcachemeta";
+            SqlConnection conTenantConfigCheck = new SqlConnection(connectionStringTenantConfigCheck);
+            conTenantConfigCheck.Open();
+            SqlCommand scTenantConfigCheck = new SqlCommand(sqlQueryTenantConfigCheck, conTenantConfigCheck);
+            object queryResultTenantConfigCheck = scTenantConfigCheck.ExecuteScalar();
+
+            string sqlQueryClientConfigCheck = "SELECT bitcacheClientId FROM bitcachemeta";
+            SqlCommand scClientConfigCheck = new SqlCommand(sqlQueryClientConfigCheck, conTenantConfigCheck);
+            object queryResultClientConfigCheck = scClientConfigCheck.ExecuteScalar();
+            conTenantConfigCheck.Close();
+
+            tenantConfigTenantBox.Text = queryResultTenantConfigCheck.ToString();
+            tenantConfigClientBox.Text = queryResultClientConfigCheck.ToString();
+
+            msalPublicClientApp = PublicClientApplicationBuilder
+            .CreateWithApplicationOptions(new PublicClientApplicationOptions
+            {
+                TenantId = queryResultTenantConfigCheck.ToString(),
+                ClientId = queryResultClientConfigCheck.ToString()
+            })
+            .WithDefaultRedirectUri() // http://localhost
+            .Build();
+
             if (tenantConfigured == false)
             {
                 MessageBox.Show("You need to configure the tenant first");
@@ -217,8 +247,12 @@ namespace bitcache
                 if (signedIn == false)
                 {
 
+
+
                     // Acquire a cached access token for Microsoft Graph if one is available from a prior
                     // execution of this authentication flow.
+
+
                     var accounts = await msalPublicClientApp.GetAccountsAsync();
                     if (accounts.Any())
                     {
@@ -276,10 +310,6 @@ namespace bitcache
             }
         }
 
-        public void UpdateTenantLabel(string text)
-        {
-            tenantConfig.Text = text;
-        }
         public void UpdateTenantConfigState(bool configured)
         {
             tenantConfigured = configured;
@@ -312,8 +342,6 @@ namespace bitcache
                     }
                 }
             }
-
-
 
             //Caling MS Graph API
 
@@ -389,11 +417,13 @@ namespace bitcache
                         progressBar.Value++;
                         syncStatus.Text = "Syncing... " + progressBar.Value + " of " + progressBar.Maximum + " keys.";
 
-                        string sqlQuery = "INSERT INTO bitcachekeys (bitcacheHostname, bitcacheKeyId, bitcacheKeyContent, bitcacheKeyDate, bitcacheOS) VALUES (@bitcacheHostname, @bitcacheKeyId, @bitcacheKeyContent, @bitcacheKeyDate, @bitcacheOS)";
-                        SqlConnection con = new SqlConnection(connectionString);
+                        string connectionString1 = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
 
-                        con.Open();
-                        SqlCommand sc = new SqlCommand(sqlQuery, con);
+                        SqlConnection conKeys = new SqlConnection(connectionString1);
+                        string sqlQuery = "INSERT INTO bitcachekeys (bitcacheHostname, bitcacheKeyId, bitcacheKeyContent, bitcacheKeyDate, bitcacheOS) VALUES (@bitcacheHostname, @bitcacheKeyId, @bitcacheKeyContent, @bitcacheKeyDate, @bitcacheOS)";
+
+                        conKeys.Open();
+                        SqlCommand sc = new SqlCommand(sqlQuery, conKeys);
 
                         var bitcacheHostname = new SqlParameter("bitcacheHostname", System.Data.SqlDbType.VarChar);
                         bitcacheHostname.Value = comp.displayName;
@@ -416,33 +446,62 @@ namespace bitcache
                         sc.Parameters.Add(bitcacheOS);
 
                         sc.ExecuteNonQuery();
-                        con.Close();
+                        conKeys.Close();
 
+                        string sqlQueryAllKeys = "SELECT * FROM bitcachekeys ORDER BY bitcacheHostname";
+                        System.Data.DataTable dataTable = new System.Data.DataTable();
+
+                        try
+                        {
+                            using (SqlConnection connection = new SqlConnection(connectionString))
+                            {
+                                connection.Open();
+
+                                using (SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlQueryAllKeys, connection))
+                                {
+                                    dataAdapter.Fill(dataTable);
+                                }
+                            }
+                            resultsPane.DataSource = dataTable;
+                            resultsPane.Columns[0].HeaderText = "No.";
+                            resultsPane.Columns[1].HeaderText = "Hostname";
+                            resultsPane.Columns[2].HeaderText = "Key ID";
+                            resultsPane.Columns[3].HeaderText = "Recovery Key";
+                            resultsPane.Columns[4].HeaderText = "Key Stored On";
+                            resultsPane.Columns[5].HeaderText = "Operating System";
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show("Error: " + ex.Message);
+                        }
 
                     }
                 }
+
+
             }
 
-            string sqlQueryLastSync = "SELECT bitcacheSyncTime FROM bitcachemeta";
-            SqlConnection conLastSync = new SqlConnection(connectionString);
-            conLastSync.Open();
-            SqlCommand scLastSync = new SqlCommand(sqlQueryLastSync, conLastSync);
-            object queryResultLastSync = scLastSync.ExecuteScalar();
+            progressBar.Value = 0;
+            syncStatus.Text = "Sync completed!";
 
-            if (queryResultLastSync != null)
-            {
-                string sqlQueryMeta = "UPDATE bitcachemeta SET bitcacheSyncTime = '" + DateTime.Now.ToString() + "'";
-                SqlCommand scMeta = new SqlCommand(sqlQueryMeta, conLastSync);
-                scMeta.ExecuteNonQuery();
-            }
-            else
-            {
-                string sqlQueryMeta = "INSERT INTO bitcachemeta (bitcacheSyncTime) VALUES ('" + DateTime.Now.ToString() + "')";
-                SqlCommand scMeta = new SqlCommand(sqlQueryMeta, conLastSync);
-                scMeta.ExecuteNonQuery();
-            }
-            conLastSync.Close();
-            syncStatus.Text = "Sync completed";
+            connectionString = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
+            string sqlQueryNumberKeys = "SELECT COUNT(*) FROM bitcachekeys";
+            SqlConnection conSyncFinished = new SqlConnection(connectionString);
+            conSyncFinished.Open();
+            SqlCommand scNumberKeys = new SqlCommand(sqlQueryNumberKeys, conSyncFinished);
+            object queryResultLastSync = scNumberKeys.ExecuteScalar();
+
+            DateTime now = DateTime.Now;
+            string nowFormatted = now.ToString("dd-MM-yyyy HH:mm");
+            string sqlQueryInsertTime = "UPDATE bitcachemeta SET bitcacheSyncTime='" + nowFormatted + "'";
+
+            SqlCommand scLastSync = new SqlCommand(sqlQueryInsertTime, conSyncFinished);
+            object queryResultNumberKeys = scLastSync.ExecuteScalar();
+            conSyncFinished.Close();
+
+            lastSync.Text = "Last sync: " + nowFormatted;
+
+
         }
 
         private void ExitButton_Click(object sender, EventArgs e)
@@ -461,12 +520,47 @@ namespace bitcache
                 MessageBox.Show("You need to sign in first");
                 return;
             }
+
+
         }
 
         private void tenantConfigButton_Click(object sender, EventArgs e)
         {
-            tenantConfigOK tenantConfigdialog = new tenantConfigOK();
-            tenantConfigdialog.ShowDialog();
+            string newTenant = tenantConfigTenantBox.Text;
+            string newClient = tenantConfigClientBox.Text;
+            string pattern = "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$";
+
+            if (!(Regex.IsMatch(newTenant, pattern)) || !(Regex.IsMatch(newClient, pattern)))
+            {
+                MessageBox.Show("Please enter a valid Tenant ID and Client ID");
+                return;
+            }
+            else
+            {
+
+                string connectionStringDB = "Data Source=.\\SQLEXPRESS;Database=bitcache;Integrated Security=True;TrustServerCertificate=True; MultipleActiveResultSets = true";
+                string sqlQueryTenantDelete = "DELETE FROM bitcachemeta;";
+                string sqlQueryTenantUpdate = "INSERT INTO bitcachemeta (bitcacheTenantId, bitcacheClientId) VALUES ('" + newTenant + "', '" + newClient + "')";
+
+
+
+                using (SqlConnection connTable = new SqlConnection(connectionStringDB))
+                {
+                    connTable.Open();
+                    using (SqlCommand cmdTable = new SqlCommand(sqlQueryTenantDelete, connTable))
+                    {
+                        cmdTable.ExecuteNonQuery();
+                    }
+
+                    using (SqlCommand cmdTable = new SqlCommand(sqlQueryTenantUpdate, connTable))
+                    {
+                        cmdTable.ExecuteNonQuery();
+                    }
+                    connTable.Close();
+                }
+
+                tenantConfigured = true;
+            }
         }
 
         private void searchButton_Click(object sender, EventArgs e)
@@ -569,6 +663,59 @@ namespace bitcache
                 MessageBox.Show("No data to export", "Info");
             }
         }
+
+        private void tenantConfig_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            DialogResult result = MessageBox.Show(
+                "Are you sure you want to remove all keys from Bitcache DB? The keys in your Entra ID tenant will remain intact but you will lose all keys in the local database.",
+                "Confirmation",
+                MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Warning
+            );
+            if (result == DialogResult.OK)
+            {
+                string connectionString = "Data Source=.\\SQLEXPRESS;Initial Catalog=bitcache;Integrated Security=True; TrustServerCertificate=True";
+                SqlConnection conDBClear = new SqlConnection(connectionString);
+                conDBClear.Open();
+                string sqlQueryDBClear = "DELETE FROM dbo.bitcachekeys";
+                SqlCommand scDBClear = new SqlCommand(sqlQueryDBClear, conDBClear);
+                scDBClear.ExecuteNonQuery();
+                conDBClear.Close();
+
+                string sqlQueryAllKeys = "SELECT * FROM bitcachekeys ORDER BY bitcacheHostname";
+                System.Data.DataTable dataTable = new System.Data.DataTable();
+
+                try
+                {
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+
+                        using (SqlDataAdapter dataAdapter = new SqlDataAdapter(sqlQueryAllKeys, connection))
+                        {
+                            dataAdapter.Fill(dataTable);
+                        }
+                    }
+                    resultsPane.DataSource = dataTable;
+                    resultsPane.Columns[0].HeaderText = "No.";
+                    resultsPane.Columns[1].HeaderText = "Hostname";
+                    resultsPane.Columns[2].HeaderText = "Key ID";
+                    resultsPane.Columns[3].HeaderText = "Recovery Key";
+                    resultsPane.Columns[4].HeaderText = "Key Stored On";
+                    resultsPane.Columns[5].HeaderText = "Operating System";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: " + ex.Message);
+                }
+            }
+        }
+
     }
 
     public class RecoveryKey
