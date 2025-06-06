@@ -37,12 +37,16 @@
 
 The application requires Microsoft SQL Server Express running on the same machine. The database will be create at the first launch of the application. If connection to the SQL Server is not possible, you will get an error message and the application will close.
 
-After the application is run, you will need to sync the keys from Entra ID to Bitcache. to do it, you will need to configure tenant and login. At the first run the configuration status will show "Not configured":
+After the application is run, you will need to sync the keys from Entra ID to Bitcache. to do it, you will need to configure tenant and login. At the first run the configuration will be empty:
 
-<img width="645" alt="image" src="https://github.com/user-attachments/assets/e25a4d3d-3505-4fba-a2ec-a98dfdd5d62e" />
+<img width="538" alt="image" src="https://github.com/user-attachments/assets/726286d2-a91c-496d-b3a4-ea75404aef9d" />
 
-Click on "Configure".
+you need to enter your Entra ID tenant id as well as App Client ID you got when you registered your application in entra ID. These two elements will be saved in Bitcache DB and will persist but you can update them at any moment.
+
+Click on "Configure" and then click on "Sign In" to login to your Entra ID. The token will persist in the application but you can login with another user at any moment.
+
+When you sign in, click on "Sync" to begin downloading BitLocker keys from your Entra ID tenant to Bitcache DB. The initial sync will take some time, the progress will be displayed next to the Sync button.
 
 **Roadmap**:
 
-* zero-knowledge data encrypton in the DB
+* zero-knowledge data encrypton in the DB and support for full SQL instances
