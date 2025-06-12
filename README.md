@@ -50,3 +50,4 @@ When you sign in, click on "Sync" to begin downloading BitLocker keys from your 
 **Roadmap**:
 
 * zero-knowledge data encrypton in the DB and support for full SQL instances
+* backup BL keys from AD DS
